@@ -1,0 +1,45 @@
+[project]
+name = "emp_hooks"
+version = "0.0.1"
+description = "emp hooks"
+authors = [
+    {name = "johnny-emp",email = "johnny@empyrealsdk.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "boto3 (>=1.35.0,<2.0.0)",
+    "tweepy (>=4.15.0,<5.0.0)",
+    "pydantic (>=2.10.0,<3.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.3"
+ipython = "^8.32.0"
+
+[tool.ruff]
+ignore = ["E704"]
+src-paths = ["./src"]
+line-length = 120
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+filterwarnings = [
+    "ignore::DeprecationWarning:passlib.*:",
+    "ignore::DeprecationWarning:jose.*",
+    "ignore::DeprecationWarning:websockets.legacy.*",
+    "ignore::DeprecationWarning:pytest_asyncio.*",
+]
+asyncio_mode = "auto"
