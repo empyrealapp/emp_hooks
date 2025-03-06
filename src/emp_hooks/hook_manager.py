@@ -18,7 +18,7 @@ class Queue(BaseModel):
         self._queue = self.sqs.get_queue_by_name(QueueName=self.name)
         return super().model_post_init(__context)
 
-    async def pending_count(self) -> int:
+    def pending_count(self) -> int:
         self._queue.reload()
         return int(self._queue.attributes["ApproximateNumberOfMessages"])
 
