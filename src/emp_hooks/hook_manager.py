@@ -42,6 +42,8 @@ class SQSHooksManager:
     running: bool = Field(default=False)
     _thread: threading.Thread | None = Field(default=None)
 
+    stop_event: threading.Event = Field(default_factory=threading.Event)
+
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
 
@@ -62,15 +64,17 @@ class SQSHooksManager:
         self._thread.setDaemon(True)
         self._thread.start()
 
-    def stop(self):
+    def stop(self, loop_interval: int = 5):
         self.running = False
-        self._thread.join(5)
+        self.stop_event.set()
+        if self._thread:
+            self._thread.join(loop_interval)
 
     def _run(self, visibility_timeout: int = 30, loop_interval: int = 5):
         if not self.queue:
             self.queue = Queue(name=os.environ["SQS_QUEUE_NAME"])
 
-        while True:
+        while not self.stop_event.is_set():
             messages = self.queue.get(visibility_timeout=visibility_timeout)
             for message in messages:
                 if message["type"] in self.hooks:
