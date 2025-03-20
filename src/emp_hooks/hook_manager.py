@@ -1,3 +1,4 @@
+import json
 import os
 import threading
 import time
@@ -9,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 class Queue(BaseModel):
     name: str
-    sqs: Any = Field(default_factory=lambda: boto3.client("sqs"))
+    sqs: Any = Field(default_factory=lambda: boto3.resource("sqs"))
     _queue: boto3.resources.base.ServiceResource = PrivateAttr()
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -51,19 +52,16 @@ class SQSHooksManager:
         self._thread = None
         self.stop_event = threading.Event()
 
-
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
 
     def run(self, visibility_timeout: int = 30, loop_interval: int = 5):
         if not os.environ.get("ENVIRONMENT") == "production":
             return
-
         if self.running:
             return
 
         self.running = True
-
         self._thread = threading.Thread(
             target=self._run,
             args=(visibility_timeout, loop_interval),
@@ -85,8 +83,10 @@ class SQSHooksManager:
         while not self.stop_event.is_set():
             messages = self.queue.get(visibility_timeout=visibility_timeout)
             for message in messages:
-                if message["type"] in self.hooks:
-                    self.hooks[message["type"]](message)
+                body = json.loads(message.body)
+                query = body["query"]
+                if query in self.hooks:
+                    self.hooks[query](body)
                     message.delete()
             time.sleep(loop_interval)
 
