@@ -14,6 +14,7 @@ def _register_twitter_query(twitter_query: str):
 
     if schemata_path := os.environ.get("SCHEMATA_FILEPATH"):
         try:
+            os.makedirs(os.path.dirname(schemata_path), exist_ok=True)
             with open(schemata_path, "w") as f:
                 json.dump({"twitter_queries": list(_twitter_queries)}, f)
         except IOError as e:
