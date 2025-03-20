@@ -23,7 +23,7 @@ def on_tweet(twitter_query: str):
 
     _register_twitter_query(twitter_query)
 
-    hooks.add_hook("tweet", tweet_handler)
+    hooks.add_hook(twitter_query, tweet_handler)
     hooks.run()
 
     return tweet_handler
