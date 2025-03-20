@@ -55,10 +55,15 @@ class SQSHooksManager:
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
 
-    def run(self, visibility_timeout: int = 30, loop_interval: int = 5):
+    def run(
+        self,
+        visibility_timeout: int = 30,
+        loop_interval: int = 5,
+        keep_alive: bool = False,
+    ):
         if not os.environ.get("ENVIRONMENT") == "production":
             return
-        if self.running:
+        if self.running and not keep_alive:
             return
 
         self.running = True
@@ -67,8 +72,11 @@ class SQSHooksManager:
             args=(visibility_timeout, loop_interval),
             daemon=True,
         )
-        self._thread.setDaemon(True)
         self._thread.start()
+
+        if keep_alive:
+            while True:
+                time.sleep(3)
 
     def stop(self, loop_interval: int = 5):
         self.running = False
