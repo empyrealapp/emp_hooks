@@ -49,6 +49,9 @@ jobs:
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
 
+      - name: Build
+        run: poetry build
+
       - name: Publish to PyPI
         if: github.ref == 'refs/heads/main'
         env:
