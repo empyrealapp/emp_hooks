@@ -44,6 +44,14 @@ class SQSHooksManager:
 
     stop_event: threading.Event = Field(default_factory=threading.Event)
 
+    def __init__(self):
+        self.queue = None
+        self.hooks = {}
+        self.running = False
+        self._thread = None
+        self.stop_event = threading.Event()
+
+
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
 
@@ -72,7 +80,7 @@ class SQSHooksManager:
 
     def _run(self, visibility_timeout: int = 30, loop_interval: int = 5):
         if not self.queue:
-            self.queue = Queue(name=os.environ["SQS_QUEUE_NAME"])
+            self.queue = Queue(name=os.environ["AWS_SQS_QUEUE_NAME"])
 
         while not self.stop_event.is_set():
             messages = self.queue.get(visibility_timeout=visibility_timeout)
