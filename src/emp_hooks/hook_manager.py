@@ -1,7 +1,7 @@
+import json
 import os
 import threading
 import time
-import json
 from typing import Any, Callable
 
 import boto3
@@ -52,7 +52,6 @@ class SQSHooksManager:
         self._thread = None
         self.stop_event = threading.Event()
 
-
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
 
@@ -85,12 +84,8 @@ class SQSHooksManager:
             messages = self.queue.get(visibility_timeout=visibility_timeout)
             for message in messages:
                 body = json.loads(message.body)
-                print("BODY:", body)
                 query = body["query"]
-                print("QUERY:", query)
-                print("HOOKS:", self.hooks)
                 if query in self.hooks:
-                    print("HOOK FOUND", query)
                     self.hooks[query](body)
                     message.delete()
             time.sleep(loop_interval)
