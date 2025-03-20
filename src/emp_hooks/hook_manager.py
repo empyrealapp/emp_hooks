@@ -61,7 +61,7 @@ class SQSHooksManager:
         loop_interval: int = 5,
         keep_alive: bool = False,
     ):
-        if not os.environ.get("ENVIRONMENT") == "production":
+        if not os.environ.get("ENVIRONMENT", "").lower() == "production":
             return
         if self.running and not keep_alive:
             return
