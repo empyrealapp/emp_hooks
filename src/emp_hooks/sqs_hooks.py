@@ -8,11 +8,11 @@ from typing import Callable
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from .queue import Queue
+from .queue import SQSQueue
 
 
 class SQSHooksManager(BaseModel):
-    queue: Queue | None = Field(default=None)
+    queue: SQSQueue | None = Field(default=None)
     hooks: dict[str, Callable] = Field(default_factory=dict)
     running: bool = Field(default=False)
     stop_event: threading.Event = Field(default_factory=threading.Event)
@@ -56,7 +56,7 @@ class SQSHooksManager(BaseModel):
 
     def _run(self, visibility_timeout: int = 30, loop_interval: int = 5):
         if not self.queue:
-            self.queue = Queue(name=os.environ["AWS_SQS_QUEUE_NAME"])
+            self.queue = SQSQueue(name=os.environ["AWS_SQS_QUEUE_NAME"])
 
         while not self.stop_event.is_set():
             messages = self.queue.get(visibility_timeout=visibility_timeout)
@@ -64,8 +64,9 @@ class SQSHooksManager(BaseModel):
                 body = json.loads(message.body)
                 query = body["query"]
                 if query in self.hooks:
-                    self.hooks[query](body)
-                    message.delete()
+                    do_delete: bool = self.hooks[query](body)
+                    if do_delete:
+                        message.delete()
             time.sleep(loop_interval)
 
 

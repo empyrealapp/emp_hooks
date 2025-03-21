@@ -7,7 +7,7 @@ from emp_hooks import twitter
 
 
 @twitter.on_tweet("simmi_io")
-def on_simmi_tweet(tweet: Tweet):
+def on_simmi_tweet(tweet: Tweet) -> bool:
     tweet_id = tweet.id
     author_id = tweet.author_id
 
@@ -18,10 +18,12 @@ def on_simmi_tweet(tweet: Tweet):
         text=f"I hear you, {user.data.name}.",
         in_reply_to_tweet_id=tweet_id,
     )
+
+    return True
 
 
 @twitter.on_tweet("empyreal")
-def on_emp_tweet(tweet: Tweet):
+def on_emp_tweet(tweet: Tweet) -> bool:
     tweet_id = tweet.id
     author_id = tweet.author_id
 
@@ -32,3 +34,5 @@ def on_emp_tweet(tweet: Tweet):
         text=f"I hear you, {user.data.name}.",
         in_reply_to_tweet_id=tweet_id,
     )
+
+    return True

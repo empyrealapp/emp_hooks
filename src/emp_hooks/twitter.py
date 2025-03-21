@@ -2,7 +2,7 @@ import functools
 import json
 import os
 import sys
-from typing import Any, Callable
+from typing import Callable
 
 from tweepy import Tweet
 
@@ -34,7 +34,13 @@ def on_tweet(
     loop_interval: int = 5,
     daemon: bool = False,
 ):
-    def tweet_handler(func: Callable[[Tweet], Any]):
+    """
+    A tweet_handler must take a tweepy Tweet as an argument,
+    and will return a bool to let the queue consumer know if it
+    should delete the tweet.
+    """
+
+    def tweet_handler(func: Callable[[Tweet], bool]):
         @functools.wraps(func)
         def execute_tweet(data):
             tweet_json = json.loads(data["data"])

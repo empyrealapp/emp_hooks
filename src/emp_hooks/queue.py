@@ -4,7 +4,7 @@ import boto3
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 
-class Queue(BaseModel):
+class SQSQueue(BaseModel):
     name: str
     sqs: Any = Field(default_factory=lambda: boto3.resource("sqs"))
     _queue: boto3.resources.base.ServiceResource = PrivateAttr()
