@@ -15,15 +15,25 @@ def _register_twitter_query(twitter_query: str):
     _twitter_queries.add(twitter_query)
 
     if schemata_path := os.environ.get("SCHEMATA_FILEPATH"):
+        os.makedirs(os.path.dirname(schemata_path), exist_ok=True)
+
         try:
-            os.makedirs(os.path.dirname(schemata_path), exist_ok=True)
-            with open(schemata_path, "w") as f:
-                json.dump({"twitter_queries": list(_twitter_queries)}, f)
-        except IOError as e:
-            print(f"Warning: Could not write to {schemata_path}: {e}")
+            with open(schemata_path, "r") as f:
+                data = json.loads(f.read() or "{}")
+        except IOError:
+            data = {}
+
+        with open(schemata_path, "w") as f:
+            data["twitter_queries"] = list(_twitter_queries)
+            json.dump(data, f)
 
 
-def on_tweet(twitter_query: str):
+def on_tweet(
+    twitter_query: str,
+    visibility_timeout: int = 30,
+    loop_interval: int = 5,
+    daemon: bool = False,
+):
     def tweet_handler(func: Callable[[Tweet], Any]):
         @functools.wraps(func)
         def execute_tweet(data):
@@ -35,7 +45,11 @@ def on_tweet(twitter_query: str):
 
         _register_twitter_query(twitter_query)
         hooks.add_hook(twitter_query, execute_tweet)
-        hooks.run()
+        hooks.run(
+            visibility_timeout=visibility_timeout,
+            loop_interval=loop_interval,
+            daemon=daemon,
+        )
 
         return execute_tweet
 

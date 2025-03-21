@@ -3,6 +3,7 @@ import os
 import signal
 import threading
 import time
+from types import FrameType
 from typing import Any, Callable
 
 import boto3
@@ -42,8 +43,8 @@ class SQSHooksManager:
     queue: Queue | None = Field(default=None)
     hooks: dict[str, Callable] = Field(default_factory=dict)
     running: bool = Field(default=False)
-    _thread: threading.Thread | None = Field(default=None)
 
+    _thread: threading.Thread | None = Field(default=None)
     stop_event: threading.Event = Field(default_factory=threading.Event)
 
     def __init__(self):
@@ -53,6 +54,10 @@ class SQSHooksManager:
         self._thread = None
         self.stop_event = threading.Event()
 
+        # call stop when a SIGINT or SIGTERM is sent
+        signal.signal(signal.SIGINT, self.stop)
+        signal.signal(signal.SIGTERM, self.stop)
+
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
 
@@ -60,12 +65,11 @@ class SQSHooksManager:
         self,
         visibility_timeout: int = 30,
         loop_interval: int = 5,
-        keep_alive: bool = False,
         daemon: bool = False,
     ):
         if not os.environ.get("ENVIRONMENT", "").lower() == "production":
             return
-        if self.running and not keep_alive:
+        if self.running:
             return
 
         self.running = True
@@ -76,15 +80,11 @@ class SQSHooksManager:
         )
         self._thread.start()
 
-        # call stop when a SIGINT or SIGTERM is sent
-        signal.signal(signal.SIGINT, self.stop)
-        signal.signal(signal.SIGTERM, self.stop)
-
-    def stop(self, *args, loop_interval: int = 5, **kwargs):
+    def stop(self, signum, frame: FrameType, timeout: int = 5):
         self.running = False
         self.stop_event.set()
         if self._thread:
-            self._thread.join(loop_interval)
+            self._thread.join(timeout)
 
     def _run(self, visibility_timeout: int = 30, loop_interval: int = 5):
         if not self.queue:
