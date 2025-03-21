@@ -91,10 +91,8 @@ class SQSHooksManager:
         while not self.stop_event.is_set():
             messages = self.queue.get(visibility_timeout=visibility_timeout)
             for message in messages:
-                print("MESSAGE:", message)
                 body = json.loads(message.body)
                 query = body["query"]
-                print("QUERY", query, self.hooks)
                 if query in self.hooks:
                     self.hooks[query](body)
                     message.delete()
