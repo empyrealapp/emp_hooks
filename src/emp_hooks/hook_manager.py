@@ -1,5 +1,7 @@
+import atexit
 import json
 import os
+import signal
 import threading
 import time
 from typing import Any, Callable
@@ -60,6 +62,7 @@ class SQSHooksManager:
         visibility_timeout: int = 30,
         loop_interval: int = 5,
         keep_alive: bool = False,
+        daemon: bool = False,
     ):
         if not os.environ.get("ENVIRONMENT", "").lower() == "production":
             return
@@ -70,15 +73,15 @@ class SQSHooksManager:
         self._thread = threading.Thread(
             target=self._run,
             args=(visibility_timeout, loop_interval),
-            daemon=True,
+            daemon=daemon,  # keep the program running until the hook is stopped
         )
         self._thread.start()
 
-        if keep_alive:
-            while True:
-                time.sleep(3)
+        # call stop when a SIGINT or SIGTERM is sent
+        signal.signal(signal.SIGINT, self.stop)
+        signal.signal(signal.SIGTERM, self.stop)
 
-    def stop(self, loop_interval: int = 5):
+    def stop(self, *args, loop_interval: int = 5, **kwargs):
         self.running = False
         self.stop_event.set()
         if self._thread:

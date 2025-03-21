@@ -4,7 +4,6 @@ from tweepy import Tweet
 from tweepy.client import Client
 
 from emp_hooks import twitter
-from emp_hooks.hook_manager import hooks
 
 
 @twitter.on_tweet("empyreal")
@@ -19,6 +18,3 @@ def on_tweet(tweet: Tweet):
         text=f"I hear you, {user.data.name}.",
         in_reply_to_tweet_id=tweet_id,
     )
-
-
-hooks.run(keep_alive=True)
