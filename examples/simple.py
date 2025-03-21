@@ -1,4 +1,3 @@
-import json
 import os
 
 from tweepy import Tweet
@@ -8,12 +7,10 @@ from emp_hooks import twitter
 from emp_hooks.hook_manager import hooks
 
 
-@twitter.on_tweet("simmi_io")
+@twitter.on_tweet("empyreal")
 def on_tweet(tweet: Tweet):
-    data = json.loads(tweet["data"])
-
-    tweet_id = data["id"]
-    author_id = data["author_id"]
+    tweet_id = tweet.id
+    author_id = tweet.author_id
 
     client = Client(bearer_token=os.environ["TWITTER_BEARER_TOKEN"])
     user = client.get_user(id=author_id)

@@ -1,5 +1,7 @@
+import functools
 import json
 import os
+import sys
 from typing import Any, Callable
 
 from tweepy import Tweet
@@ -23,9 +25,18 @@ def _register_twitter_query(twitter_query: str):
 
 def on_tweet(twitter_query: str):
     def tweet_handler(func: Callable[[Tweet], Any]):
-        _register_twitter_query(twitter_query)
-        hooks.add_hook(twitter_query, func)
-        return func
+        @functools.wraps(func)
+        def execute_tweet(data):
+            tweet_json = json.loads(data["data"])
+            tweet = Tweet(tweet_json)
+            result = func(tweet)
+            sys.stdout.flush()
+            return result
 
-    hooks.run()
+        _register_twitter_query(twitter_query)
+        hooks.add_hook(twitter_query, execute_tweet)
+        hooks.run()
+
+        return execute_tweet
+
     return tweet_handler
