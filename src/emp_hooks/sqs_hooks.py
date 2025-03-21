@@ -4,56 +4,24 @@ import signal
 import threading
 import time
 from types import FrameType
-from typing import Any, Callable
+from typing import Callable
 
-import boto3
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-
-class Queue(BaseModel):
-    name: str
-    sqs: Any = Field(default_factory=lambda: boto3.resource("sqs"))
-    _queue: boto3.resources.base.ServiceResource = PrivateAttr()
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    def model_post_init(self, __context: Any) -> None:
-        self._queue = self.sqs.get_queue_by_name(QueueName=self.name)
-        return super().model_post_init(__context)
-
-    def pending_count(self) -> int:
-        self._queue.reload()
-        return int(self._queue.attributes["ApproximateNumberOfMessages"])
-
-    @property
-    def url(self) -> str:
-        return self._queue.url
-
-    def get(self, max_messages: int = 5, visibility_timeout: int = 8) -> list:
-        response = self._queue.receive_messages(
-            QueueUrl=self.url,
-            MaxNumberOfMessages=max_messages,
-            VisibilityTimeout=visibility_timeout,
-        )
-
-        return response
+from .queue import Queue
 
 
-class SQSHooksManager:
+class SQSHooksManager(BaseModel):
     queue: Queue | None = Field(default=None)
     hooks: dict[str, Callable] = Field(default_factory=dict)
     running: bool = Field(default=False)
-
-    _thread: threading.Thread | None = Field(default=None)
     stop_event: threading.Event = Field(default_factory=threading.Event)
 
-    def __init__(self):
-        self.queue = None
-        self.hooks = {}
-        self.running = False
-        self._thread = None
-        self.stop_event = threading.Event()
+    _thread: threading.Thread | None = PrivateAttr(default=None)
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def model_post_init(self, __context):
         # call stop when a SIGINT or SIGTERM is sent
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
@@ -80,7 +48,7 @@ class SQSHooksManager:
         )
         self._thread.start()
 
-    def stop(self, signum, frame: FrameType, timeout: int = 5):
+    def stop(self, signum: int, frame: FrameType, timeout: int = 5):
         self.running = False
         self.stop_event.set()
         if self._thread:
