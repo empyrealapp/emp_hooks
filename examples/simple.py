@@ -1,9 +1,18 @@
 import os
+import sys
 
+from eth_rpc.networks import Base
+from eth_typeshed.uniswap_v2.events import V2SwapEvent
 from tweepy import Tweet
 from tweepy.client import Client
 
-from emp_hooks import twitter
+from emp_hooks import onchain, twitter
+
+
+@onchain.on_event(V2SwapEvent, Base)
+def print_swaps(val):
+    print("VAL:", val)
+    sys.stdout.flush()
 
 
 @twitter.on_tweet("simmi_io")

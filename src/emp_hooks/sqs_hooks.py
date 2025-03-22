@@ -8,7 +8,7 @@ from typing import Callable
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from .queue import SQSQueue
+from .aws.queue import SQSQueue
 
 
 class SQSHooksManager(BaseModel):
@@ -25,6 +25,8 @@ class SQSHooksManager(BaseModel):
         # call stop when a SIGINT or SIGTERM is sent
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
+
+        return super().model_post_init(__context)
 
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
