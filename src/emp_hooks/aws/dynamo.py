@@ -25,7 +25,7 @@ class DynamoKeyValueStore(BaseModel):
 
     def get(self, key: str) -> str | None:
         response = self._table.get_item(Key={"id": key}) or {}
-        return (response or {}).get("Item")
+        return (response or {}).get("Item", {}).get("Data")
 
     def set(self, key: str, value: str) -> None:
         self._table.put_item(Item={"id": key, "Data": value})

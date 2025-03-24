@@ -1,17 +1,16 @@
 import json
 import os
-import signal
 import threading
 import time
-from types import FrameType
 from typing import Callable
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import ConfigDict, Field, PrivateAttr
 
 from .aws.queue import SQSQueue
+from .types import Hook
 
 
-class SQSHooksManager(BaseModel):
+class SQSHooks(Hook):
     queue: SQSQueue | None = Field(default=None)
     hooks: dict[str, Callable] = Field(default_factory=dict)
     running: bool = Field(default=False)
@@ -20,13 +19,6 @@ class SQSHooksManager(BaseModel):
     _thread: threading.Thread | None = PrivateAttr(default=None)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    def model_post_init(self, __context):
-        # call stop when a SIGINT or SIGTERM is sent
-        signal.signal(signal.SIGINT, self.stop)
-        signal.signal(signal.SIGTERM, self.stop)
-
-        return super().model_post_init(__context)
 
     def add_hook(self, hook_name: str, hook: Callable):
         self.hooks[hook_name] = hook
@@ -43,6 +35,7 @@ class SQSHooksManager(BaseModel):
             return
 
         self.running = True
+        print("ADD NEW THREAD")
         self._thread = threading.Thread(
             target=self._run,
             args=(visibility_timeout, loop_interval),
@@ -50,9 +43,11 @@ class SQSHooksManager(BaseModel):
         )
         self._thread.start()
 
-    def stop(self, signum: int, frame: FrameType, timeout: int = 5):
-        self.running = False
+    def set_stop_event(self):
         self.stop_event.set()
+
+    def stop(self, timeout: int = 5):
+        self.running = False
         if self._thread:
             self._thread.join(timeout)
 
@@ -63,6 +58,9 @@ class SQSHooksManager(BaseModel):
         while not self.stop_event.is_set():
             messages = self.queue.get(visibility_timeout=visibility_timeout)
             for message in messages:
+                if self.stop_event.is_set():
+                    break
+
                 body = json.loads(message.body)
                 query = body["query"]
                 if query in self.hooks:
@@ -72,4 +70,4 @@ class SQSHooksManager(BaseModel):
             time.sleep(loop_interval)
 
 
-hooks: SQSHooksManager = SQSHooksManager()
+sqs_hooks: SQSHooks = SQSHooks()

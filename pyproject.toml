@@ -13,7 +13,6 @@ dependencies = [
     "pydantic (>=2.10.0,<3.0.0)",
 ]
 
-
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -43,3 +42,6 @@ filterwarnings = [
     "ignore::DeprecationWarning:pytest_asyncio.*",
 ]
 asyncio_mode = "auto"
+
+[tool.flake8]
+ignore = ["E704"]

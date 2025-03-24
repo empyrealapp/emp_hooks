@@ -1,18 +1,27 @@
 import os
-import sys
 
+from eth_rpc import EventData
 from eth_rpc.networks import Base
-from eth_typeshed.uniswap_v2.events import V2SwapEvent
+from eth_typeshed.uniswap_v2.events import V2SwapEvent, V2SwapEventType
 from tweepy import Tweet
 from tweepy.client import Client
 
-from emp_hooks import onchain, twitter
+from emp_hooks import hooks, onchain, twitter
 
 
 @onchain.on_event(V2SwapEvent, Base)
-def print_swaps(val):
-    print("VAL:", val)
-    sys.stdout.flush()
+def print_swaps(event_data: EventData[V2SwapEventType]):
+    event = event_data.event
+    address = event_data.log.address
+    amount0 = event.amount0_in - event.amount0_out
+    amount1 = event.amount1_in - event.amount1_out
+
+    print(
+        address,
+        "Amounts:",
+        amount0,
+        amount1,
+    )
 
 
 @twitter.on_tweet("simmi_io")
@@ -45,3 +54,6 @@ def on_emp_tweet(tweet: Tweet) -> bool:
     )
 
     return True
+
+
+hooks.run_forever()

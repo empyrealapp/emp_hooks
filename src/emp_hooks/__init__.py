@@ -1,5 +1,5 @@
 from . import onchain, twitter
-from .sqs_hooks import hooks
+from .manager import hooks
 
 __all__ = [
     "hooks",
