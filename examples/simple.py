@@ -6,7 +6,7 @@ from eth_typeshed.uniswap_v2.events import V2SwapEvent, V2SwapEventType
 from tweepy import Tweet
 from tweepy.client import Client
 
-from emp_hooks import hooks, onchain, twitter
+from emp_hooks import onchain, twitter
 
 
 @onchain.on_event(V2SwapEvent, Base)
@@ -54,6 +54,3 @@ def on_emp_tweet(tweet: Tweet) -> bool:
     )
 
     return True
-
-
-hooks.run_forever()
