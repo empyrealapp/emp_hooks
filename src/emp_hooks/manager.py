@@ -5,6 +5,7 @@ from types import FrameType
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from .onchain import onchain_hooks
+from .scheduler import scheduled_hooks
 from .sqs_hooks import sqs_hooks
 from .types import Hook
 
@@ -44,3 +45,4 @@ class HooksManager(BaseModel):
 hooks: HooksManager = HooksManager()
 hooks.add_hook_manager(sqs_hooks)
 hooks.add_hook_manager(onchain_hooks)
+hooks.add_hook_manager(scheduled_hooks)
