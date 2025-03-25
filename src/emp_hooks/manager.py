@@ -4,9 +4,9 @@ from types import FrameType
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from .onchain import onchain_hooks
-from .scheduler import scheduled_hooks
-from .sqs_hooks import sqs_hooks
+from emp_hooks.logger import log
+
+from .handlers import onchain_hooks, scheduled_hooks, sqs_hooks
 from .types import Hook
 
 
@@ -23,15 +23,16 @@ class HooksManager(BaseModel):
         return super().model_post_init(__context)
 
     def add_hook_manager(self, hook: Hook):
+        hook.update_stop_event(self._stopped)
         self.hook_managers.append(hook)
 
     def stop(self, signum: int, frame: FrameType):
         self._stopped.set()
-        for hook in self.hook_managers:
-            hook.set_stop_event()
 
+        log.info("Stopping hook managers")
         for hook in self.hook_managers:
             hook.stop()
+            log.info("Stopped hook manager: %s", hook.name)
 
     def run_forever(self, timeout: int = 3):
         import time

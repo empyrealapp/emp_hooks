@@ -1,3 +1,4 @@
+import logging
 import os
 
 from eth_rpc import EventData
@@ -6,7 +7,15 @@ from eth_typeshed.uniswap_v2.events import V2SwapEvent, V2SwapEventType
 from tweepy import Tweet
 from tweepy.client import Client
 
-from emp_hooks import onchain, twitter
+from emp_hooks import log, onchain, scheduler
+from emp_hooks.handlers import twitter
+
+# Configure logging
+log.setLevel(logging.DEBUG)
+stream_handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+stream_handler.setFormatter(formatter)
+log.addHandler(stream_handler)
 
 
 @onchain.on_event(V2SwapEvent, Base)
@@ -16,9 +25,9 @@ def print_swaps(event_data: EventData[V2SwapEventType]):
     amount0 = event.amount0_in - event.amount0_out
     amount1 = event.amount1_in - event.amount1_out
 
-    print(
+    log.debug(
+        "Address: %s, Amounts: %s, %s",
         address,
-        "Amounts:",
         amount0,
         amount1,
     )
@@ -54,3 +63,8 @@ def on_emp_tweet(tweet: Tweet) -> bool:
     )
 
     return True
+
+
+@scheduler.on_schedule("* * * * *")
+def print_hello():
+    print("Hello, world!")

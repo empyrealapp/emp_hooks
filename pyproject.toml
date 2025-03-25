@@ -46,4 +46,4 @@ filterwarnings = [
 asyncio_mode = "auto"
 
 [tool.flake8]
-ignore = ["E704"]
+ignore = ["E704", "W503"]

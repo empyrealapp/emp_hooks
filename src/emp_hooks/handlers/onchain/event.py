@@ -4,7 +4,8 @@ from collections.abc import Awaitable, Callable
 from eth_rpc import Event, set_alchemy_key
 from eth_rpc.types import BLOCK_STRINGS, Network
 
-from ..aws import DynamoKeyValueStore
+from emp_hooks.utils import DynamoKeyValueStore
+
 from .hooks import onchain_hooks
 
 

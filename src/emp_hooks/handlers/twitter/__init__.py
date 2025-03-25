@@ -6,7 +6,7 @@ from typing import Callable
 
 from tweepy import Tweet
 
-from .sqs_hooks import sqs_hooks
+from ..sqs_hooks import sqs_hooks
 
 _twitter_queries = set()
 
