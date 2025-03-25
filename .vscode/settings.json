@@ -13,4 +13,7 @@
   "python.analysis.extraPaths": [
     "src/"
   ],
+  "python.linting.flake8Args": [
+    "--config=pyproject.toml"
+  ]
 }

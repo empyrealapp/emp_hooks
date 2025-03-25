@@ -6,7 +6,7 @@ from typing import Callable
 
 from tweepy import Tweet
 
-from .sqs_hooks import hooks
+from .sqs_hooks import sqs_hooks
 
 _twitter_queries = set()
 
@@ -50,8 +50,8 @@ def on_tweet(
             return result
 
         _register_twitter_query(twitter_query)
-        hooks.add_hook(twitter_query, execute_tweet)
-        hooks.run(
+        sqs_hooks.add_hook(twitter_query, execute_tweet)
+        sqs_hooks.run(
             visibility_timeout=visibility_timeout,
             loop_interval=loop_interval,
             daemon=daemon,

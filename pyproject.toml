@@ -11,8 +11,8 @@ dependencies = [
     "boto3 (>=1.35.0,<2.0.0)",
     "tweepy (>=4.15.0,<5.0.0)",
     "pydantic (>=2.10.0,<3.0.0)",
+    "eth-rpc-py (>=0.1.29,<0.2.0)",
 ]
-
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -43,3 +43,6 @@ filterwarnings = [
     "ignore::DeprecationWarning:pytest_asyncio.*",
 ]
 asyncio_mode = "auto"
+
+[tool.flake8]
+ignore = ["E704"]
