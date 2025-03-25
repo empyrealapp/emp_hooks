@@ -6,15 +6,16 @@ from typing import Callable
 
 from pydantic import ConfigDict, Field, PrivateAttr
 
-from .aws.queue import SQSQueue
-from .types import Hook
+from emp_hooks.types import Hook
+from emp_hooks.utils import SQSQueue
 
 
 class SQSHooks(Hook):
+    name: str = Field(default="SQS Hooks")
+
     queue: SQSQueue | None = Field(default=None)
     hooks: dict[str, Callable] = Field(default_factory=dict)
     running: bool = Field(default=False)
-    stop_event: threading.Event = Field(default_factory=threading.Event)
 
     _thread: threading.Thread | None = PrivateAttr(default=None)
 
@@ -35,16 +36,12 @@ class SQSHooks(Hook):
             return
 
         self.running = True
-        print("ADD NEW THREAD")
         self._thread = threading.Thread(
             target=self._run,
             args=(visibility_timeout, loop_interval),
             daemon=daemon,  # keep the program running until the hook is stopped
         )
         self._thread.start()
-
-    def set_stop_event(self):
-        self.stop_event.set()
 
     def stop(self, timeout: int = 5):
         self.running = False
@@ -55,10 +52,10 @@ class SQSHooks(Hook):
         if not self.queue:
             self.queue = SQSQueue(name=os.environ["AWS_SQS_QUEUE_NAME"])
 
-        while not self.stop_event.is_set():
+        while not self._stop_event.is_set():
             messages = self.queue.get(visibility_timeout=visibility_timeout)
             for message in messages:
-                if self.stop_event.is_set():
+                if self._stop_event.is_set():
                     break
 
                 body = json.loads(message.body)

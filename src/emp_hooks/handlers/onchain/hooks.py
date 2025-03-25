@@ -8,8 +8,9 @@ from eth_rpc import Event
 from eth_rpc.types import Network
 from pydantic import ConfigDict, Field, PrivateAttr
 
-from ..aws import DynamoKeyValueStore
-from ..types import Hook
+from emp_hooks.logger import log
+from emp_hooks.types import Hook
+from emp_hooks.utils import DynamoKeyValueStore
 
 
 def event_generator(
@@ -36,8 +37,10 @@ def _event_generator(
     _offset_value = kv_store.get(f"{event.name}-{network}-offset")
     offset_value = int(_offset_value or "0")
 
+    log.info("Backfilling from block: %s", offset_value)
+
     for event_data in event[network].sync.backfill(
-        start_block=offset_value, step_size=2_000
+        start_block=offset_value,
     ):
         if stop_event.is_set():
             break
@@ -54,7 +57,8 @@ def _event_generator(
 
 
 class OnchainHooks(Hook):
-    stop_event: threading.Event = Field(default_factory=threading.Event)
+    name: str = Field(default="Onchain Hooks")
+
     futures: list[Future] = Field(default_factory=list)
     loop: asyncio.AbstractEventLoop | None = Field(default=None)
     _threads: list[threading.Thread] = PrivateAttr(default_factory=list)
@@ -69,17 +73,13 @@ class OnchainHooks(Hook):
     ):
         thread = threading.Thread(
             target=event_generator,
-            args=(func, event, network, self.stop_event),
+            args=(func, event, network, self._stop_event),
             daemon=False,
         )
         thread.start()
         self._threads.append(thread)
 
-    def set_stop_event(self):
-        self.stop_event.set()
-
     def stop(self, timeout: int = 5):
-        self.set_stop_event()
         for thread in self._threads:
             thread.join(timeout)
 
