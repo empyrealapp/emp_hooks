@@ -3,7 +3,8 @@ import os
 
 from eth_rpc import EventData
 from eth_rpc.networks import Base
-from eth_typeshed.uniswap_v2.events import V2SwapEvent, V2SwapEventType
+from eth_rpc.types import HexAddress, HexStr
+from eth_typeshed.uniswap_v3.events import V3SwapEvent, V3SwapEventType
 from tweepy import Tweet
 from tweepy.client import Client
 
@@ -18,19 +19,21 @@ stream_handler.setFormatter(formatter)
 log.addHandler(stream_handler)
 
 
-@onchain.on_event(V2SwapEvent, Base)
-def print_swaps(event_data: EventData[V2SwapEventType]):
+@onchain.on_event(
+    V3SwapEvent,
+    Base,
+    address=HexAddress(HexStr("0xb4CB800910B228ED3d0834cF79D697127BBB00e5")),
+    start_block=28048000,
+    # forces the start block to be overwritten, otherwise resumes from the last checkpoint
+    force_set_block=True,
+)
+def log_eth_price(event_data: EventData[V3SwapEventType]):
     event = event_data.event
-    address = event_data.log.address
-    amount0 = event.amount0_in - event.amount0_out
-    amount1 = event.amount1_in - event.amount1_out
+    amount0 = event.amount0 / 1e18
+    amount1 = event.amount1 / 1e6
 
-    log.debug(
-        "Address: %s, Amounts: %s, %s",
-        address,
-        amount0,
-        amount1,
-    )
+    price = abs(amount1 / amount0)
+    log.debug("ETH Price: %s", price)
 
 
 @twitter.on_tweet("simmi_io")
@@ -68,3 +71,8 @@ def on_emp_tweet(tweet: Tweet) -> bool:
 @scheduler.on_schedule("* * * * *")
 def print_hello():
     print("Hello, world!")
+
+
+@scheduler.on_schedule(execution_frequency=15)
+def print_hello_quickly():
+    print("Hello again!")
