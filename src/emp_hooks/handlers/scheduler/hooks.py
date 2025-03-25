@@ -23,17 +23,17 @@ def _cron_function(
     last_run = kv_store.get(f"scheduled-{identifier}")
     if not last_run:
         raise ValueError(f"No last run value found for {identifier}")
-    last_run_value = float(last_run)
+    last_run_value: float = float(last_run)
 
     while not stop_event.is_set():
-        now = datetime.now(timezone.utc)
+        now: datetime = datetime.now(timezone.utc)
         cron = croniter(cron_string, last_run_value)
-        next_run = cron.get_next(datetime).replace(tzinfo=timezone.utc)
+        next_run: datetime = cron.get_next(datetime).replace(tzinfo=timezone.utc)
 
         if next_run <= now:
             log.info("Running scheduled function: %s", identifier)
             func()
-            last_run_value = now.timestamp()
+            last_run_value = next_run.timestamp()
             last_run = str(last_run_value)
             kv_store.set(f"scheduled-{identifier}", last_run)
 

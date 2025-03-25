@@ -35,12 +35,25 @@ def on_tweet(
     daemon: bool = False,
 ):
     """
-    A tweet_handler must take a tweepy Tweet as an argument,
-    and will return a bool to let the queue consumer know if it
-    should delete the tweet.
+    Decorator to register a function to handle tweets matching a specific query.
+
+    Args:
+        twitter_query (str): The Twitter query string to filter tweets.
+        visibility_timeout (int, optional): The visibility timeout for the SQS message. Defaults to 30.
+        loop_interval (int, optional): The interval in seconds between each poll of the SQS queue. Defaults to 5.
+        daemon (bool, optional): Whether the SQS consumer thread should run as a daemon. Defaults to False.
+
+    Returns:
+        Callable: A decorator that registers the function to handle tweets matching the specified query.
     """
 
     def tweet_handler(func: Callable[[Tweet], bool]):
+        """
+        A tweet_handler must take a tweepy Tweet as an argument,
+        and will return a bool to let the queue consumer know if it
+        should delete the tweet.
+        """
+
         @functools.wraps(func)
         def execute_tweet(data):
             tweet_json = json.loads(data["data"])
