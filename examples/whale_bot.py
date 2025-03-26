@@ -13,13 +13,10 @@ from tweepy.client import Client
 
 from emp_hooks import log, manager, onchain
 
-
-def get_eth_price():
-    eth_address = ChainlinkPriceOracle.Ethereum.ETH
-    eth_price_feed = ETHUSDPriceFeed[Ethereum](address=eth_address)
-    price = eth_price_feed.latest_round_data().get(sync=True)
-    return price.answer / 1e8
-
+ETH_ADDRESS = HexAddress(HexStr("0x4200000000000000000000000000000000000006"))
+ETH_PRICE: float = -1.0
+token_cache = {}
+symbol_cache = {}
 
 # Configure logging
 log.setLevel(logging.DEBUG)
@@ -27,6 +24,14 @@ stream_handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 stream_handler.setFormatter(formatter)
 log.addHandler(stream_handler)
+
+
+def get_eth_price():
+    eth_address = ChainlinkPriceOracle.Ethereum.ETH
+    eth_price_feed = ETHUSDPriceFeed[Ethereum](address=eth_address)
+    price = eth_price_feed.latest_round_data().get(sync=True)
+    return price.answer / 1e8
+
 
 if os.environ.get("ENVIRONMENT", "").lower() == "production":
     client = Client(
@@ -39,16 +44,11 @@ if os.environ.get("ENVIRONMENT", "").lower() == "production":
 else:
     # create a printer class to mimick tweeting for testing
 
-    class Printer:
+    class TwitterMock:
         def create_tweet(self, text: str):
             print("TWEET:", text)
 
-    client = Printer()
-
-ETH_ADDRESS = HexAddress(HexStr("0x4200000000000000000000000000000000000006"))
-ETH_PRICE: float = -1.0
-token_cache = {}
-symbol_cache = {}
+    client = TwitterMock()
 
 
 @onchain.on_event(
