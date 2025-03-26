@@ -20,6 +20,7 @@ def on_event(
     topic1: list[HexStr] | HexStr | IGNORE = IGNORE_VAL,
     topic2: list[HexStr] | HexStr | IGNORE = IGNORE_VAL,
     topic3: list[HexStr] | HexStr | IGNORE = IGNORE_VAL,
+    subscribe: bool = False,
     force_set_block: bool = False,
 ):
     """
@@ -66,6 +67,7 @@ def on_event(
             func,
             event,
             network,
+            subscribe=subscribe,
         )
         return func
 
