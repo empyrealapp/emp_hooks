@@ -15,6 +15,7 @@ from emp_hooks import log, manager, onchain
 
 ETH_ADDRESS = HexAddress(HexStr("0x4200000000000000000000000000000000000006"))
 ETH_PRICE: float = -1.0
+BIG_BUY_LIMIT: int = 10_000
 token_cache = {}
 symbol_cache = {}
 
@@ -119,7 +120,7 @@ def log_eth_price(event_data: EventData[V3SwapEventType]):
             event_data.log.transaction_hash,
         )
 
-    if buy_amount > 10_000:
+    if buy_amount > BIG_BUY_LIMIT:
         client.create_tweet(
             text=dedent(
                 f"""
@@ -131,7 +132,7 @@ def log_eth_price(event_data: EventData[V3SwapEventType]):
         """
             )
         )
-    elif sell_amount > 10_000:
+    elif sell_amount > BIG_BUY_LIMIT:
         client.create_tweet(
             text=dedent(
                 f"""
