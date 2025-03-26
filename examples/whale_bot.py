@@ -8,6 +8,7 @@ from eth_typeshed.chainlink.eth_usd_feed import ChainlinkPriceOracle, ETHUSDPric
 from eth_typeshed.erc20 import ERC20
 from eth_typeshed.uniswap_v3.events import V3SwapEvent, V3SwapEventType
 from eth_typeshed.uniswap_v3.pool import UniswapV3Pool
+from eth_typing import HexAddress, HexStr
 from tweepy.client import Client
 
 from emp_hooks import log, manager, onchain
@@ -44,6 +45,7 @@ else:
 
     client = Printer()
 
+ETH_ADDRESS = HexAddress(HexStr("0x4200000000000000000000000000000000000006"))
 ETH_PRICE: float = -1.0
 token_cache = {}
 symbol_cache = {}
@@ -52,8 +54,7 @@ symbol_cache = {}
 @onchain.on_event(
     V3SwapEvent,
     Base,
-    # forces the start block to be overwritten, otherwise resumes from the last checkpoint
-    force_set_block=True,
+    # only subscribe to current events
     subscribe=True,
 )
 def log_eth_price(event_data: EventData[V3SwapEventType]):
@@ -85,7 +86,7 @@ def log_eth_price(event_data: EventData[V3SwapEventType]):
     buy_amount: float = 0.0
     sell_amount: float = 0.0
 
-    if token0 == "0x4200000000000000000000000000000000000006":
+    if token0 == ETH_ADDRESS:
         if token1 not in symbol_cache:
             token_symbol = ERC20[Base](address=token1).symbol().get(sync=True)
             symbol_cache[token1] = token_symbol
@@ -95,21 +96,27 @@ def log_eth_price(event_data: EventData[V3SwapEventType]):
             buy_amount = abs(amount0 / 1e18 * ETH_PRICE)
         else:
             sell_amount = abs(amount0 / 1e18 * ETH_PRICE)
-    elif token1 == "0x4200000000000000000000000000000000000006":
+    elif token1 == ETH_ADDRESS:
         if token0 not in symbol_cache:
             token_symbol = ERC20[Base](address=token0).symbol().get(sync=True)
             symbol_cache[token0] = token_symbol
         token_symbol = symbol_cache[token0]
         if amount1 > 0:
-            sell_amount = abs(amount1 / 1e18 * ETH_PRICE)
-        else:
             buy_amount = abs(amount1 / 1e18 * ETH_PRICE)
+        else:
+            sell_amount = abs(amount1 / 1e18 * ETH_PRICE)
     else:
         return
 
     if buy_amount > 0:
         log.debug(
             "Buy Amount: %s | tx_hash: %s", buy_amount, event_data.log.transaction_hash
+        )
+    elif sell_amount > 0:
+        log.debug(
+            "Sell Amount: %s | tx_hash: %s",
+            sell_amount,
+            event_data.log.transaction_hash,
         )
 
     if buy_amount > 10_000:

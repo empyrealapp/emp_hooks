@@ -21,11 +21,11 @@ class HooksManager(BaseModel):
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
 
-        # self._main_thread = threading.Thread(
-        #     target=self.run_forever,
-        #     daemon=False,
-        # )
-        # self._main_thread.start()
+        self._main_thread = threading.Thread(
+            target=self.run_forever,
+            daemon=False,
+        )
+        self._main_thread.start()
 
         return super().model_post_init(__context)
 
