@@ -14,11 +14,18 @@ class HooksManager(BaseModel):
     hook_managers: list[Hook] = Field(default_factory=list)
     running: bool = Field(default=False)
     _stopped: threading.Event = PrivateAttr(default_factory=threading.Event)
+    _main_thread: threading.Thread = PrivateAttr()
 
     def model_post_init(self, __context):
         # call "stop" when a SIGINT or SIGTERM is sent
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
+
+        self._main_thread = threading.Thread(
+            target=self.run_forever,
+            daemon=False,
+        )
+        self._main_thread.start()
 
         return super().model_post_init(__context)
 

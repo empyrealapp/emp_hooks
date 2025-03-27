@@ -18,13 +18,38 @@ def event_generator(
     event: Event,
     network: type[Network],
     stop_event: threading.Event,
+    subscribe: bool = False,
     sleep_time: int = 8,
 ):
     while True:
-        _event_generator(func, event, network, stop_event)
+        if subscribe:
+            _event_subscriber(func, event, network, stop_event)
+        else:
+            _event_generator(
+                func,
+                event,
+                network,
+                stop_event,
+            )
         if stop_event.is_set():
             break
         time.sleep(sleep_time)
+
+
+def _event_subscriber(
+    func: Callable[[Event], None],
+    event: Event,
+    network: type[Network],
+    stop_event: threading.Event,
+):
+    """
+    Subscribes to the event and calls the function for each event.
+    """
+    for event_data in event[network].sync.subscribe():
+        if stop_event.is_set():
+            break
+
+        func(event_data)
 
 
 def _event_generator(
@@ -33,6 +58,9 @@ def _event_generator(
     network: type[Network],
     stop_event: threading.Event,
 ):
+    """
+    Backfills from the last block and calls the function for each event.
+    """
     kv_store = DynamoKeyValueStore()
     _offset_value = kv_store.get(f"{event.name}-{network}-offset")
     offset_value = int(_offset_value or "0")
@@ -70,11 +98,12 @@ class OnchainHooks(Hook):
         func,
         event: Event,
         network: type[Network],
+        subscribe: bool = False,
     ):
         thread = threading.Thread(
             target=event_generator,
-            args=(func, event, network, self._stop_event),
-            daemon=False,
+            args=(func, event, network, self._stop_event, subscribe),
+            daemon=True,
         )
         thread.start()
         self._threads.append(thread)
