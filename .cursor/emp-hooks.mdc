@@ -1,0 +1,8 @@
+---
+description: rules to facilitate developing in emp-hooks
+globs: *.py
+---
+- emp_hooks relies on decorators to support integrations with services
+- the decorators create subscriptions, which trigger the function when an update comes
+- try to make hooks idempotent.  they should only get an event once, but this can not always be guaranteed
+- keep hooks lightweight and focused
