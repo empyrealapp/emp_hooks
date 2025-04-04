@@ -1,6 +1,6 @@
 [project]
 name = "emp_hooks"
-version = "0.0.6"
+version = "0.0.7"
 description = "emp hooks"
 authors = [
     {name = "johnny-emp",email = "johnny@empyrealsdk.com"}
