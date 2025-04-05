@@ -5,7 +5,7 @@ from emp_agents import AgentBase
 from emp_agents.providers import OpenAIModelType, OpenAIProvider
 from telegram import Update
 from telegram.constants import ChatType
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, filters
 
 from emp_hooks import manager
 from emp_hooks.handlers.telegram import on_message
@@ -16,7 +16,7 @@ from .services import chat_service, message_service, user_service
 load_dotenv()
 
 
-@on_message()
+@on_message(filter=filters.TEXT & ~filters.COMMAND)
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_user = user_service.load_bot(context)
 
