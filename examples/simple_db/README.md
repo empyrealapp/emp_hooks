@@ -1,19 +1,27 @@
-# Initialize the migrations
+### Setup DB Path
+
+For local development, you need to set the DEPLOYMENT_FILESYSTEM_PATH.  When deployed in emp cloud, this will be set automatically.
+
 ```bash
-alembic init alembic
+export DEPLOYMENT_FILESYSTEM_PATH=/tmp
 ```
 
-# Create a new migration
+### Initialize the migrations
+```bash
+alembic init _alembic
+```
+
+### Create a new migration
 ```bash
 alembic revision --autogenerate -m "message"
 ```
 
-# Apply the migrations
+### Apply the migrations
 ```bash
 alembic upgrade head
 ```
 
-to run the example:
+### Run the example
 ```bash
 # include the DEPLOYMENT_FILESYSTEM_PATH to avoid using the default
 DEPLOYMENT_FILESYSTEM_PATH=/tmp python -m simple_db.main
