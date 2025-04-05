@@ -11,5 +11,8 @@ class Hook(BaseModel, ABC):
     @abstractmethod
     def stop(self, timeout: int = 5): ...
 
+    def start(self):
+        pass
+
     def update_stop_event(self, stop_event: threading.Event):
         self._stop_event = stop_event

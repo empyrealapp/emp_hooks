@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from emp_hooks.logger import log
 
-from .handlers import onchain_hooks, scheduled_hooks, sqs_hooks
+from .handlers import onchain_hooks, scheduled_hooks, sqs_hooks, telegram_hooks
 from .types import Hook
 
 
@@ -28,6 +28,7 @@ class HooksManager(BaseModel):
         self.hook_managers.append(hook)
 
     def stop(self, signum: int, frame: FrameType):
+        log.info("Stopping hook managers")
         self._stopped.set()
 
         log.info("Stopping hook managers")
@@ -36,7 +37,11 @@ class HooksManager(BaseModel):
             log.info("Stopped hook manager: %s", hook.name)
 
     def run_forever(self, timeout: int = 3):
+        """Runs all hook managers indefinitely"""
         import time
+
+        for hook in self.hook_managers:
+            hook.start()
 
         while not self._stopped.is_set():
             time.sleep(timeout)
@@ -48,3 +53,4 @@ hooks: HooksManager = HooksManager()
 hooks.add_hook_manager(sqs_hooks)
 hooks.add_hook_manager(onchain_hooks)
 hooks.add_hook_manager(scheduled_hooks)
+hooks.add_hook_manager(telegram_hooks)
