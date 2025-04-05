@@ -2,33 +2,18 @@ import os
 
 from dotenv import load_dotenv
 from emp_agents import AgentBase
-from emp_agents.providers import OpenAIProvider
+from emp_agents.providers import OpenAIModelType, OpenAIProvider
 from telegram import Update
+from telegram.constants import ChatType
 from telegram.ext import ContextTypes
 
 from emp_hooks import manager
 from emp_hooks.handlers.telegram import on_message
-from emp_hooks.orm import load_session
 
-from .models import Chat, Message, User
-from .prompt import PROMPT
-from .services import ChatService, MessageService, UserService
+from .prompts import GROUP_CHAT_PROMPT, PRIVATE_CHAT_PROMPT
+from .services import chat_service, message_service, user_service
 
 load_dotenv()
-
-agent = AgentBase(
-    prompt=PROMPT,
-    sync_tools=True,
-    provider=OpenAIProvider(
-        api_key=os.environ["OPENAI_API_KEY"],
-    ),
-)
-
-session = load_session()
-
-chat_service = ChatService(session, Chat)
-user_service = UserService(session, User)
-message_service = MessageService(session, Message)
 
 
 @on_message()
@@ -37,6 +22,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not (update.message and update.message.from_user):
         return
+
+    is_group_chat = update.message.chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]
+
+    if is_group_chat:
+        agent = AgentBase(
+            prompt=GROUP_CHAT_PROMPT,
+            sync_tools=True,
+            provider=OpenAIProvider(
+                api_key=os.environ["OPENAI_API_KEY"],
+                default_model=OpenAIModelType.gpt4o,
+            ),
+        )
+    else:
+        agent = AgentBase(
+            prompt=PRIVATE_CHAT_PROMPT,
+            sync_tools=True,
+            provider=OpenAIProvider(
+                api_key=os.environ["OPENAI_API_KEY"],
+                default_model=OpenAIModelType.gpt4o,
+            ),
+        )
 
     # add user and message to database
     chat = chat_service.store_chat(update.message)
