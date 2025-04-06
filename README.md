@@ -60,6 +60,18 @@ def on_simmi_tweet(tweet: Tweet):
     print(tweet)
 ```
 
+### Running Hooks
+
+Make sure to import the manager and call `run_forever` on it.
+This will ensure that all hooks are running indefinitely, and will handle the SIGINT and SIGTERM signals to stop the hooks gracefully.
+
+```python
+from emp_hooks import manager
+
+if __name__ == "__main__":
+    manager.hooks.run_forever()
+```
+
 ## Contributing
 
 
