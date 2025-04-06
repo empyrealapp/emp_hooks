@@ -21,7 +21,7 @@ TELEGRAM_API_KEY=your_telegram_bot_api_key
 3. Upgrade local database:
 
 ```bash
-export DEPLOYMENT_FILESYSTEM_PATH=./db.sqlite
+export DEPLOYMENT_FILESYSTEM_PATH=.
 alembic upgrade head
 ```
 

@@ -36,7 +36,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = f"sqlite:///{os.getenv('DEPLOYMENT_FILESYSTEM_PATH')}/db.sqlite"
+    url = f"sqlite:///{os.getenv('DEPLOYMENT_FILESYSTEM_PATH', '.')}/db.sqlite"
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -56,7 +56,7 @@ def run_migrations_online() -> None:
 
     """
 
-    url = f"sqlite:///{os.getenv('DEPLOYMENT_FILESYSTEM_PATH')}/db.sqlite"
+    url = f"sqlite:///{os.getenv('DEPLOYMENT_FILESYSTEM_PATH', '.')}/db.sqlite"
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}) | {"sqlalchemy.url": url},
         prefix="sqlalchemy.",
