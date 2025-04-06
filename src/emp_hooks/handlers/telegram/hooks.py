@@ -30,7 +30,7 @@ class TelegramHooks(Hook):
 
     _app: Application | None = PrivateAttr(default=None)
     _thread: threading.Thread = PrivateAttr()
-    _loop: asyncio.AbstractEventLoop = PrivateAttr()
+    _loop: asyncio.AbstractEventLoop | None = PrivateAttr(default=None)
     _is_running: bool = PrivateAttr(default=False)
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
