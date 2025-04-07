@@ -6,7 +6,7 @@ from eth_rpc.event import IGNORE, IGNORE_VAL
 from eth_rpc.types import BLOCK_STRINGS, HexAddress, Network
 from eth_typing import HexStr
 
-from emp_hooks.utils import DynamoKeyValueStore
+from emp_hooks.utils import DynamoKeyValueStore, MockDynamoKeyValueStore
 
 from .hooks import onchain_hooks
 
@@ -42,7 +42,10 @@ def on_event(
     """
 
     set_alchemy_key(os.environ["ALCHEMY_KEY"])
-    kv_store = DynamoKeyValueStore()
+    if os.environ.get("ENVIRONMENT") == "testing":
+        kv_store = MockDynamoKeyValueStore()
+    else:
+        kv_store = DynamoKeyValueStore()
     item = kv_store.get(f"{event.name}-{network}-offset")
 
     if address:
