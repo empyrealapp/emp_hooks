@@ -34,6 +34,9 @@ class TelegramHooks(Hook):
     _is_running: bool = PrivateAttr(default=False)
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    def register_app(self, app: Application):
+        self._app = app
+
     def get_app(self):
         if self._app is None:
             self._app = (

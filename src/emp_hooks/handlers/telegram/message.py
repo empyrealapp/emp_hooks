@@ -37,6 +37,8 @@ def on_message(
         nonlocal app
         if app is None:
             app = telegram_hooks.get_app()
+        else:
+            telegram_hooks.register_app(app)
 
         if command is not None:
             log.info("Adding command handler for %s", command)

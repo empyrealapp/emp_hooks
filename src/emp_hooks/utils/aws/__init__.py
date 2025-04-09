@@ -1,4 +1,8 @@
-from .dynamo import DynamoKeyValueStore
+from .dynamo import DynamoKeyValueStore, MockDynamoKeyValueStore
 from .queue import SQSQueue
 
-__all__ = ["DynamoKeyValueStore", "SQSQueue"]
+__all__ = [
+    "DynamoKeyValueStore",
+    "MockDynamoKeyValueStore",
+    "SQSQueue",
+]

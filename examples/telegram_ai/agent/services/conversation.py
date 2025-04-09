@@ -19,6 +19,20 @@ class MessageService(DBService[Message]):
         stmt = stmt.order_by(Message.timestamp.desc()).limit(limit)
         return list(self.session.scalars(stmt))[::-1]
 
+    def add_message(
+        self,
+        chat: Chat,
+        user: User,
+        message: TelegramMessage,
+    ):
+        return self.get_or_create(
+            chat_id=chat.id,
+            message_id=message.message_id,
+            text=message.text,
+            user_id=user.id,
+            timestamp=message.date,
+        )
+
 
 class ChatService(DBService[Chat]):
     def store_chat(self, message: TelegramMessage) -> Chat:
