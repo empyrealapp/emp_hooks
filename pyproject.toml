@@ -31,8 +31,10 @@ pytest = "^8.3.4"
 pytest-asyncio = "^0.25.3"
 ipython = "^8.32.0"
 
-[tool.ruff]
+[tool.ruff.lint]
 ignore = ["E704"]
+
+[tool.ruff]
 src-paths = ["./src"]
 line-length = 120
 
