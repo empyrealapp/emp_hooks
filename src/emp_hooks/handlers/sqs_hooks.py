@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import threading
@@ -62,6 +63,8 @@ class SQSHooks(Hook):
                 query = body["query"]
                 if query in self.hooks:
                     do_delete: bool = self.hooks[query](body)
+                    if asyncio.iscoroutinefunction(self.hooks[query]):
+                        asyncio.run(self.hooks[query](body))
                     if do_delete:
                         message.delete()
             time.sleep(loop_interval)
