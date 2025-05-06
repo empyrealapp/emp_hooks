@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import json
 import os
@@ -55,10 +56,13 @@ def on_tweet(
         """
 
         @functools.wraps(func)
-        def execute_tweet(data):
+        async def execute_tweet(data):
             tweet_json = json.loads(data["data"])
             tweet = Tweet(tweet_json)
-            result = func(tweet)
+            if asyncio.iscoroutinefunction(func):
+                result = await func(tweet)
+            else:
+                result = func(tweet)
             sys.stdout.flush()
             return result
 
