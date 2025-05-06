@@ -1,6 +1,6 @@
 [project]
 name = "emp_hooks"
-version = "0.0.12"
+version = "0.0.12post1"
 description = "emp hooks"
 authors = [
     {name = "johnny-emp",email = "johnny@empyrealsdk.com"}
@@ -50,6 +50,3 @@ filterwarnings = [
     "ignore::DeprecationWarning:pytest_asyncio.*",
 ]
 asyncio_mode = "auto"
-
-[tool.flake8]
-ignore = ["E704", "W503"]
