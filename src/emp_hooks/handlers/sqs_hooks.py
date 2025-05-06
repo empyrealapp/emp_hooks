@@ -2,13 +2,15 @@ import asyncio
 import json
 import os
 import threading
-import time
 from typing import Callable
 
 from pydantic import ConfigDict, Field, PrivateAttr
 
+import botocore.exceptions
 from emp_hooks.types import Hook
 from emp_hooks.utils import SQSQueue
+
+from emp_hooks.logger import log
 
 
 class SQSHooks(Hook):
@@ -78,7 +80,10 @@ class SQSHooks(Hook):
                         do_delete = func(body)
 
                     if do_delete:
-                        message.delete()
+                        try:
+                            message.delete()
+                        except botocore.exceptions.ClientError as e:
+                            log.error("Error deleting message: %s", e)
             await asyncio.sleep(loop_interval)
 
 
