@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import threading
@@ -18,6 +19,7 @@ class SQSHooks(Hook):
     running: bool = Field(default=False)
 
     _thread: threading.Thread | None = PrivateAttr(default=None)
+    _loop: asyncio.AbstractEventLoop | None = PrivateAttr(default=None)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -36,10 +38,11 @@ class SQSHooks(Hook):
             return
 
         self.running = True
+        self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(
-            target=self._run,
+            target=self._run_loop,
             args=(visibility_timeout, loop_interval),
-            daemon=daemon,  # keep the program running until the hook is stopped
+            daemon=daemon,
         )
         self._thread.start()
 
@@ -48,7 +51,12 @@ class SQSHooks(Hook):
         if self._thread:
             self._thread.join(timeout)
 
-    def _run(self, visibility_timeout: int = 30, loop_interval: int = 5):
+    def _run_loop(self, visibility_timeout: int = 30, loop_interval: int = 5):
+        asyncio.set_event_loop(self._loop)
+        assert self._loop is not None
+        self._loop.run_until_complete(self._run(visibility_timeout, loop_interval))
+
+    async def _run(self, visibility_timeout: int = 30, loop_interval: int = 5):
         if not self.queue:
             self.queue = SQSQueue(name=os.environ["AWS_SQS_QUEUE_NAME"])
 
@@ -61,10 +69,17 @@ class SQSHooks(Hook):
                 body = json.loads(message.body)
                 query = body["query"]
                 if query in self.hooks:
-                    do_delete: bool = self.hooks[query](body)
+                    func = self.hooks[query]
+
+                    do_delete: bool
+                    if asyncio.iscoroutinefunction(func):
+                        do_delete = await func(body)
+                    else:
+                        do_delete = func(body)
+
                     if do_delete:
                         message.delete()
-            time.sleep(loop_interval)
+            await asyncio.sleep(loop_interval)
 
 
 sqs_hooks: SQSHooks = SQSHooks()
