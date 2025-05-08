@@ -1,6 +1,6 @@
 import warnings
 
-warnings.filterwarnings("ignore", module="tweepy")
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 from .handlers import onchain, scheduler, twitter  # noqa: E402
 from .logger import log  # noqa: E402
